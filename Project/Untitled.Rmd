@@ -1,0 +1,76 @@
+---
+title: "Honours: "
+author: "Benjamin Moran"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+require(knitr)
+require(astsa)
+require(broom)
+opts_chunk$set(collapse = TRUE, fig.align="center")
+opts_chunk$set(cache = TRUE, echo = FALSE)
+CItestfunc <- function( # Calcs if 95% of acf/pacf within blue CI bars.
+  x,
+  cnf.int = qnorm({1 + 0.95}/2)/sqrt(as.integer(length(x)))) { 
+ans <- mean(abs(x)<cnf.int)
+ans2 <- ifelse(ans<0.95,"No","Yes")
+print(ans)
+print(ans2)
+}
+```
+
+```{r data, include=FALSE}
+fludata <- read.csv("Data/fludata3.csv", header=TRUE)
+x <- fludata$ILI_Unvaccinated
+pr.ix <- which.min(x); x[pr.ix]
+x[pr.ix] <- {x[pr.ix-3] + 2*x[pr.ix-2] + 3*x[pr.ix-1] + 3*x[pr.ix+1] + 2*x[pr.ix+2] + x[pr.ix+3]}/12
+
+y <- fludata$ILI_Vaccinated
+pr.iy <- which.min(y)
+y[pr.iy] <- {y[pr.iy-3] + 2*y[pr.iy-2] + 3*y[pr.iy-1] + 3*y[pr.iy+1] + 2*y[pr.iy+2] + y[pr.iy+3]}/12
+
+
+ccf(x,y,na.action=na.omit, lag.max = 25)
+```
+
+
+```{r plotTS1}
+plot.ts(x)
+fit <- arima(x,c(1,0,0))
+plot.ts(y)
+pwy <- filter(y, filter = c(1,-fit$coef[1]), sides = 1)
+head(pwy)
+pwx <- fit$residuals 
+ccf(pwx,pwy, na.action=na.omit, lag.max = 25)
+```
+```{r}
+x.acf <- acf2(x, length(x)-1)
+CItestfunc(x.acf[,1]);CItestfunc(x.acf[,2])
+y.acf <- acf2(y, length(y)-1)
+CItestfunc(y.acf[,1]);CItestfunc(y.acf[,2])
+```
+
+
+```{r plotTS1b}
+Dx <- diff(x)
+plot.ts(Dx)
+dx.acf <- acf2(Dx, length(x)-2)
+CItestfunc(dx.acf[,1]);CItestfunc(dx.acf[,2])
+Dy <- diff(y)
+plot.ts(Dy)
+
+
+dy.acf <- acf2(Dy, length(y)-2)
+CItestfunc(dy.acf[,1]);CItestfunc(dy.acf[,2])
+
+fitD <- arima(Dx,c(1,0,0))
+pwDy <- filter(Dy, filter = c(1,-fitD$coef[1]), sides = 1)
+head(pwDy)
+pwDx <- fitD$residuals 
+ccf(pwDx,pwDy, na.action=na.omit, lag.max = 25)
+
+
+```
+
