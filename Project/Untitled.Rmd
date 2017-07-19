@@ -30,17 +30,16 @@ x[pr.ix] <- {x[pr.ix-3] + 2*x[pr.ix-2] + 3*x[pr.ix-1] + 3*x[pr.ix+1] + 2*x[pr.ix
 y <- fludata$ILI_Vaccinated
 pr.iy <- which.min(y)
 y[pr.iy] <- {y[pr.iy-3] + 2*y[pr.iy-2] + 3*y[pr.iy-1] + 3*y[pr.iy+1] + 2*y[pr.iy+2] + y[pr.iy+3]}/12
-
-
 ccf(x,y,na.action=na.omit, lag.max = 25)
 ```
 
 
 ```{r plotTS1}
 plot.ts(x)
-fit <- arima(x,c(1,0,0))
-plot.ts(y)
-pwy <- filter(y, filter = c(1,-fit$coef[1]), sides = 1)
+fit <- arima(x,c(2,0,0))
+# plot.ts(y)
+# sarima(y,3,0,0)
+pwy <- filter(y, filter = c(1,-fit$coef[1],-fit$coef[2]), sides = 1)
 head(pwy)
 pwx <- fit$residuals 
 ccf(pwx,pwy, na.action=na.omit, lag.max = 25)
@@ -73,4 +72,3 @@ ccf(pwDx,pwDy, na.action=na.omit, lag.max = 25)
 
 
 ```
-

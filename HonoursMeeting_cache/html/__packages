@@ -1,0 +1,13 @@
+base
+astsa
+knitr
+ggplot2
+ggthemes
+tufte
+tidyverse
+tibble
+tidyr
+readr
+purrr
+dplyr
+forecast
