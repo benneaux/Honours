@@ -1,51 +1,65 @@
-require(tm)
-require(pdftools)
-require(stringi)
-require(httr)
-require(rvest)
-require(tidyverse)
-library(stringr)
+# require(tm)
+# require(pdftools)
+# require(stringi)
+# require(httr)
+# require(rvest)
+# require(tidyverse)
+# library(stringr)
+# library(lubridate)
+#
 
+# # run the following after restarting R
+# #Sys.setenv(http_proxy = "http://<username>:<password>@proxy.newcastle.edu.au:8080")
 #
 # page <- read_html("http://flutracking.net/Info/Reports/")
 #
 # page %>%
 #   html_nodes("a") %>%       # find all links
 #   html_attr("href") %>%     # get the url
-#   str_subset("/[0-9]{3,}$") -> name # find those that end a numeric string > length(3)
+#   str_subset("/[0-9]{3,}$") -> filenames # find those that end a numeric string > length(3)
 #
-# name %>%                    # extract the numeric id from each name
+# filenames %>%                    # extract the numeric id from each name
 #   str_extract("[0-9]+") %>% # i.e. '201728' instead of 'Info/Reports/201728'
-#   as.data.frame() -> name
+#   as.data.frame() -> filenames
 #
-# name %>%                    # select only those from 2017
-#   filter(
-#     str_detect(
-#       name$.,
-#       "2017")
-#     ) -> name
+# prev_retrieved_files <- data.frame(
+#                           files = readRDS(
+#                             "Data/retrieved_files_list.RDS"),
+#                           stringsAsFactors = FALSE)
 #
-# name %>%                    # Remove unnecessary factor levels
-#   droplevels() -> name
+# names <- data.frame(
+#           files = setdiff(
+#                   filenames$.,
+#                   prev_retrieved_files[,1])) -> names
 #
-# name$. %>%                  # convert from factors to strings
-#   as.character(levels(name$.)) -> name$.
+# saveRDS(rbind(
+#           prev_retrieved_files,
+#           names),
+#         "Data/retrieved_files_list.RDS")
 #
-# ###############################################################################
+# rm(prev_retrieved_files, filenames)
 # #
-# # Dowload the files
+# # ###############################################################################
+# # #
+# # # Dowload the files
+# # #
+# # ###############################################################################
 # #
-# ###############################################################################
 #
-# for(i in 1:nrow(name)){
+# for(i in 1:nrow(names)){
 #
-#   fileurl = paste0("http://flutracking.net/Info/Reports/",
-#                    as.character(name[i,1]))
-#   filename = paste0(as.character(name[i,1]),
-#                     ".pdf")
-#   download(fileurl,
-#            filename,
-#            mode="wb")
+#   fileurl  = paste0("http://flutracking.net/Info/Reports/",
+#                    as.character(names[i,1]))
+#   fil      = GET(fileurl,
+#                  write_disk("pdfs/tmp.fil",
+#                             TRUE))
+#   fname    = str_match(headers(fil)$`content-disposition`,
+#                        "=(.*)")[2]
+#
+#   file.rename("pdfs/tmp.fil",
+#               paste0("pdfs/",
+#                      fname))
+#
 #   Sys.sleep(2)
 # }
 
@@ -55,8 +69,8 @@ library(stringr)
 #
 ###############################################################################
 
-files <- list.files(pattern = "pdf$")
-data <- matrix(nrow=length(files),ncol = 12)
+files <- list.files(path = "pdfs/",pattern = "pdf$")
+data <- tbl_df(matrix(nrow=length(files),ncol = 12))
 
 ###############################################################################
 #
@@ -114,21 +128,36 @@ perclastfunc <- function(x, codenum){
                       codes$CharClass[codenum]))
 }
 
+convertWEdatefunc <- function(x){
+
+  WEday = stri_extract_first_regex(x,"[0-9]{2}")
+  WEmonth = match(
+    stri_extract_first_regex(
+      x,
+      "\\b[A-z][a-z]*\\b")[[1]],
+    month.name)
+  WEyear = stri_extract_first_regex(x,"[0-9]{4}")
+  make_date(day = WEday, month = WEmonth, year = WEyear)
+  }
+
+
 ###############################################################################
 #
 # Data scraping
 #
 ###############################################################################
-
+setwd("pdfs")
 for(i in 1:length(files)){
 
   tryCatch({
 
     txt        <- as.list(pdf_text(files[i])[1]) # scrapes all txt from the pdf
 
-    data[i,1]  <- ifelse(is.na(datefunc(txt,1)), # the 'week ending' date.
+    WEdate  <- ifelse(is.na(datefunc(txt,1)), # the 'week ending' date.
                          datefunc(txt,2),
                          datefunc(txt,1))
+
+    data[i,1]  <- convertWEdatefunc(WEdate)
 
     data[i,2]  <- numberfunc(txt,3)              # the # of responses
     data[i,3]  <- numberfunc(txt,4)              #
@@ -141,7 +170,6 @@ for(i in 1:length(files)){
     data[i,10] <- percfirstfunc(txt, 11)         #
     data[i,11] <- perclastfunc(txt,12)           #
     data[i,12] <- perclastfunc(txt,13)           #
-
   },
   error=function(e){})
 }
@@ -159,6 +187,9 @@ colnames(data) <- c("Week_end",
                     "ILI_wAbsence_Vaccinated",
                     "ILI_wAbsence_Unvaccinated")
 
+data[[1]] <- as_date(data[[1]])
+
+setwd("..")
 ###############################################################################
 #
 # Export
