@@ -6,3 +6,4 @@
 *.html
 *.csv
 pdfs
+!Data/fludata.csv

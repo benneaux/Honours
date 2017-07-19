@@ -196,4 +196,4 @@ setwd("..")
 #
 ###############################################################################
 
-write.csv(data,file="fludata.csv")
+write.csv(data,file="Data/fludata.csv")
