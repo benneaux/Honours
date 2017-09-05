@@ -6,5 +6,6 @@ description: >
   An online space for my Honours project.
 github_username:  benneaux
 theme: jekyll-theme-cayman
+timezone: Australia/Sydney
 # Build settings
 markdown: kramdown
