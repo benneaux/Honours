@@ -10,13 +10,6 @@ timezone: Australia/Sydney
 # Build settings
 markdown: kramdown
 
-defaults:
-  -
-    scope:
-      path: "" # an empty string here means all files in the project
-    values:
-      layout: "default"
-
 source:       .
 #destination:  ./_site
 # plugins_dir:  _plugins
@@ -25,4 +18,11 @@ layouts_dir:  _layout
 #includes_dir: _includes
 #collections:
 #  posts:
-#    output:   true      
+#    output:   true  
+defaults:
+  -
+    scope:
+      path: "" # an empty string here means all files in the project
+    values:
+      layout: "default"
+    
