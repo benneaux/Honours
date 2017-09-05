@@ -10,13 +10,13 @@ timezone: Australia/Sydney
 # Build settings
 markdown: kramdown
 
-source:       .
-#destination:  ./_site
+# source:       .
+# destination:  ./_site
 # plugins_dir:  _plugins
-layouts_dir:  _layouts
+# layouts_dir:  _layouts
 # data_dir:     _data
-#includes_dir: _includes
-#collections:
+# includes_dir: _includes
+# collections:
 #  posts:
 #    output:   true  
 defaults:
