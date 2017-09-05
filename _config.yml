@@ -16,4 +16,13 @@ defaults:
       path: "" # an empty string here means all files in the project
     values:
       layout: "default"
-      
+
+source:       .
+destination:  ./_site
+# plugins_dir:  _plugins
+layouts_dir:  _layouts
+# data_dir:     _data
+#includes_dir: _includes
+#collections:
+#  posts:
+#    output:   true      
