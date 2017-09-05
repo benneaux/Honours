@@ -1,1 +1,10 @@
+
+# Site settings
+title: Benjamin Moran
+email: benjamin.moran@uon.edu.au
+description: >
+  An online space for my Honours project.
+github_username:  benneaux
 theme: jekyll-theme-cayman
+# Build settings
+markdown: kramdown
