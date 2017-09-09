@@ -8,7 +8,7 @@ permalink:        pretty
 
 # Setup
 title:            Benjamin Moran
-theme:            jekyll-theme-cayman
+#theme:            jekyll-theme-cayman
 description:      'Honours Student <br> Statistics <br> University of Newcastle'
 url:              '/'
 baseurl:          '/'
