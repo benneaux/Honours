@@ -1,1 +1,34 @@
-theme: jekyll-theme-cayman
+# Dependencies
+markdown:         kramdown
+#highlighter:      pygments
+
+# Permalinks
+permalink:        pretty
+#relative_permalinks: true
+
+# Setup
+title:            Benjamin Moran
+#tagline:          'A Jekyll theme'
+description:      'Honours Student <br> Statistics <br> University of Newcastle'
+url:              '/'
+baseurl:          '/'
+keywords:          'Time Series Analysis'
+
+author:
+  name:           'Benjamin Moran'
+  url:
+
+include:
+  - teaching
+#paginate:         5
+
+# Custom vars
+#version:          2.1.0
+
+#github:
+#  repo:           https://github.com/
+
+
+# search engine optimization
+#gems:
+#- jekyll-seo-tag
