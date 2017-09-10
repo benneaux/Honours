@@ -1,0 +1,30 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r setup, include=FALSE}
+library(astsa)
+library(knitr)
+library(ggplot2)
+library(tidyverse)
+library(forecast)
+library(sweep)
+library(timekit)
+opts_chunk$set(collapse = TRUE, fig.align="center")
+opts_chunk$set(cache = TRUE, echo = FALSE)
+```
+
+```{r}
+fludata <- fludata <- read.csv("Data/fludata.csv", header=TRUE)
+UnVacc <- fludata$ILI_Unvaccinated
+pr.iUnVacc <- which.min(UnVacc)
+UnVacc[pr.iUnVacc]
+UnVacc[pr.iUnVacc] <- {UnVacc[pr.iUnVacc-3] + 2*UnVacc[pr.iUnVacc-2] + 3*UnVacc[pr.iUnVacc-1] + 3*UnVacc[pr.iUnVacc+1] + 2*UnVacc[pr.iUnVacc+2] + UnVacc[pr.iUnVacc+3]}/12
+
+
+Vaxx <- fludata$ILI_Vaccinated
+pr.iVaxx <- which.min(Vaxx)
+Vaxx[pr.iVaxx] <- {Vaxx[pr.iVaxx-3] + 2*Vaxx[pr.iVaxx-2] + 3*Vaxx[pr.iVaxx-1] + 3*Vaxx[pr.iVaxx+1] + 2*Vaxx[pr.iVaxx+2] + Vaxx[pr.iVaxx+3]}/12
+```
+

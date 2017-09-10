@@ -1,44 +1,49 @@
-# require(tm)
-# require(pdftools)
-# require(stringi)
-# require(httr)
-# require(rvest)
-# require(tidyverse)
-# library(stringr)
-# library(lubridate)
-#
+require(tm)
+require(pdftools)
+require(stringi)
+require(httr)
+require(rvest)
+require(tidyverse)
+library(stringr)
+library(lubridate)
+
 
 # # run the following after restarting R
 # #Sys.setenv(http_proxy = "http://<username>:<password>@proxy.newcastle.edu.au:8080")
-#
-# page <- read_html("http://flutracking.net/Info/Reports/")
-#
-# page %>%
-#   html_nodes("a") %>%       # find all links
-#   html_attr("href") %>%     # get the url
-#   str_subset("/[0-9]{3,}$") -> filenames # find those that end a numeric string > length(3)
-#
-# filenames %>%                    # extract the numeric id from each name
-#   str_extract("[0-9]+") %>% # i.e. '201728' instead of 'Info/Reports/201728'
-#   as.data.frame() -> filenames
-#
-# prev_retrieved_files <- data.frame(
-#                           files = readRDS(
-#                             "Data/retrieved_files_list.RDS"),
-#                           stringsAsFactors = FALSE)
-#
+
+page <- read_html("http://flutracking.net/Info/Reports/")
+
+page %>%
+  html_nodes("a") %>%       # find all links
+  html_attr("href") %>%     # get the url
+  str_subset("/[0-9]{3,}$") -> filenames # find those that end a numeric string > length(3)
+
+filenames %>%                    # extract the numeric id from each name
+  str_extract("[0-9]+") %>% # i.e. '201728' instead of 'Info/Reports/201728'
+  as.data.frame() -> filenames
+
+prev_retrieved_files <- data.frame(
+                          files = readRDS(
+                            "Data/retrieved_files_list.RDS"),
+                          stringsAsFactors = FALSE)
+
+names <- data.frame(
+          files = setdiff(
+                  filenames$.,
+                  prev_retrieved_files[,1])) -> names
+saveRDS(rbind(
+  prev_retrieved_files,
+  names),
+  "Data/retrieved_files_list.RDS")
+
+
 # names <- data.frame(
-#           files = setdiff(
-#                   filenames$.,
-#                   prev_retrieved_files[,1])) -> names
+#           files = filenames$.) -> names
+
+saveRDS(names,"Data/retrieved_files_list.RDS")
+
+rm(prev_retrieved_files, filenames)
 #
-# saveRDS(rbind(
-#           prev_retrieved_files,
-#           names),
-#         "Data/retrieved_files_list.RDS")
-#
-# rm(prev_retrieved_files, filenames)
-# #
 # # ###############################################################################
 # # #
 # # # Dowload the files
@@ -46,22 +51,24 @@
 # # ###############################################################################
 # #
 #
-# for(i in 1:nrow(names)){
-#
-#   fileurl  = paste0("http://flutracking.net/Info/Reports/",
-#                    as.character(names[i,1]))
-#   fil      = GET(fileurl,
-#                  write_disk("pdfs/tmp.fil",
-#                             TRUE))
-#   fname    = str_match(headers(fil)$`content-disposition`,
-#                        "=(.*)")[2]
-#
-#   file.rename("pdfs/tmp.fil",
-#               paste0("pdfs/",
-#                      fname))
-#
-#   Sys.sleep(2)
-# }
+
+if(nrow(names)>0==TRUE){
+for(i in 1:nrow(names)){
+
+  fileurl  = paste0("http://flutracking.net/Info/Reports/",
+                   as.character(names[i,1]))
+  fil      = GET(fileurl,
+                 write_disk("pdfs/tmp.fil",
+                            TRUE))
+  fname    = str_match(headers(fil)$`content-disposition`,
+                       "=(.*)")[2]
+
+  file.rename("pdfs/tmp.fil",
+              paste0("pdfs/",
+                     fname))
+
+  Sys.sleep(2)
+}
 
 ###############################################################################
 #
@@ -151,7 +158,7 @@ for(i in 1:length(files)){
 
   tryCatch({
 
-    txt        <- as.list(pdf_text(files[i])[1]) # scrapes all txt from the pdf
+    txt     <- as.list(pdf_text(files[i])[1]) # scrapes all txt from the pdf
 
     WEdate  <- ifelse(is.na(datefunc(txt,1)), # the 'week ending' date.
                          datefunc(txt,2),
@@ -197,3 +204,5 @@ setwd("..")
 ###############################################################################
 
 write.csv(data,file="Data/fludata.csv")
+}
+rm(names, page)

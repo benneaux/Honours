@@ -5,52 +5,11 @@ require(httr)
 require(rvest)
 require(tidyverse)
 library(stringr)
-library(downloader)
+library(lubridate)
+library(readxl)
 
-page <- read_html("http://flutracking.net/Info/Reports/")
-
-page %>%
-  html_nodes("a") %>%       # find all links
-  html_attr("href") %>%     # get the url
-  str_subset("/[0-9]{3,}$") -> name # find those that end a numeric string > length(3)
-
-name %>%                    # extract the numeric id from each name
-  str_extract("[0-9]+") %>% # i.e. '201728' instead of 'Info/Reports/201728'
-  as.data.frame() -> name
-
-name %>%                    # select only those from 2017
-  filter(str_detect(name$.,"2017")) -> name
-
-name %>%                    # Remove unnecessary factor levels
-  droplevels() -> name
-
-name$. %>%                  # convert from factors to strings
-  as.character(levels(name$.)) -> name$.
-
-###############################################################################
-#
-# Dowload the files
-#
-###############################################################################
-
-for(i in 1:nrow(name)){
-
-  fileurl = paste0("http://flutracking.net/Info/Reports/",
-                   as.character(name[i,1]))
-  filename = paste0(as.character(name[i,1]),
-                    ".pdf")
-  download(fileurl, filename, mode="wb")
-  Sys.sleep(2)
-}
-
-###############################################################################
-#
-# Setup the container for the data
-#
-###############################################################################
-
-files <- list.files(pattern = "pdf$")
-data <- matrix(nrow=length(files),ncol = 12)
+files <- list.files(path = "pdfs/",pattern = "xlsx$")
+data2 <- tbl_df(matrix(nrow=length(files),ncol = 12))
 
 ###############################################################################
 #
@@ -108,39 +67,54 @@ perclastfunc <- function(x, codenum){
       codes$CharClass[codenum]))
 }
 
+convertWEdatefunc <- function(x){
+
+  WEday = stri_extract_first_regex(x,"[0-9]{2}")
+  WEmonth = match(
+    stri_extract_first_regex(
+      x,
+      "\\b[A-z][a-z]*\\b")[[1]],
+    month.name)
+  WEyear = stri_extract_first_regex(x,"[0-9]{4}")
+  make_date(day = WEday, month = WEmonth, year = WEyear)
+}
+
+
 ###############################################################################
 #
 # Data scraping
 #
 ###############################################################################
-
+setwd("pdfs")
 for(i in 1:length(files)){
 
   tryCatch({
 
-    txt        <- as.list(pdf_text(files[i])[1]) # scrapes all txt from the pdf
+    txt        <- read_excel((files[i]), sheet = 1)[1:4,c(1,5)] # scrapes all txt from the pdf
 
-    data[i,1]  <- ifelse(is.na(datefunc(txt,1)), # the 'week ending' date.
-                         datefunc(txt,2),
-                         datefunc(txt,1))
+    WEdate  <- ifelse(is.na(datefunc(txt[1,1],1)), # the 'week ending' date.
+                      datefunc(txt[1,1],2),
+                      datefunc(txt[1,1],1))
 
-    data[i,2]  <- numberfunc(txt,3)              # the # of responses
-    data[i,3]  <- numberfunc(txt,4)              #
-    data[i,4]  <- numberfunc(txt,5)              #
-    data[i,5]  <- numberfunc(txt,6)              #
-    data[i,6]  <- numberfunc(txt,7)              #
-    data[i,7]  <- numberfunc(txt,8)              #
-    data[i,8]  <- numberfunc(txt,9)              #
-    data[i,9]  <- percfirstfunc(txt,10)          #
-    data[i,10] <- percfirstfunc(txt, 11)         #
-    data[i,11] <- perclastfunc(txt,12)           #
-    data[i,12] <- perclastfunc(txt,13)           #
+    data2[i,1]  <- convertWEdatefunc(WEdate)
 
+    data2[i,2]  <- numberfunc(txt[3,1],3)              # the # of responses
+    data2[i,3]  <- numberfunc(txt[3,1],4)              #
+    data2[i,4]  <- numberfunc(txt[3,1],5)              #
+    data2[i,5]  <- numberfunc(txt[4,2],6)              #
+    data2[i,6]  <- numberfunc(txt[3,1],7)              #
+    data2[i,7]  <- numberfunc(txt[4,2],8)              #
+    data2[i,8]  <- numberfunc(txt[4,2],9)              #
+    txt[4,2]   <- str_replace_all(txt[4,2]," %", "%")
+    data2[i,9]  <- percfirstfunc(txt[4,2],10)          #
+    data2[i,10] <- percfirstfunc(txt[4,2], 11)         #
+    data2[i,11] <- perclastfunc(txt[4,2],12)           #
+    data2[i,12] <- perclastfunc(txt[4,2],13)           #
   },
   error=function(e){})
 }
 
-colnames(data) <- c("Week_end",
+colnames(data2) <- c("Week_end",
                     "Responses",
                     "Self_Report",
                     "Other_Report",
@@ -153,11 +127,16 @@ colnames(data) <- c("Week_end",
                     "ILI_wAbsence_Vaccinated",
                     "ILI_wAbsence_Unvaccinated")
 
+data2[[1]] <- as_date(data2[[1]])
+
+setwd("..")
+
+data3 <- rbind(data, data2)
+data3 <- data3[!is.na(data3[[1]]),]
 ###############################################################################
 #
 # Export
 #
 ###############################################################################
 
-write.csv(data,file="fludata.csv")
-
+write.csv(data3,file="Data/fludata.csv")
